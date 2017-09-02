@@ -6,7 +6,7 @@ class App extends Component {
   render() {
     return (
       <div>
-        <h1> Pagar-me POC </h1>
+        <h1> Pagar-me </h1>
         <Transaction> </Transaction>
       </div>
     );
