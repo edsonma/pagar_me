@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Button, ControlLabel, FormControl } from 'react-bootstrap';
+import { Button, ControlLabel, FormControl, FormGroup, InputGroup } from 'react-bootstrap';
 import { Glyphicon, Row, Col, Grid } from 'react-bootstrap';
 import { Payment } from 'payment';
 import './transaction.css';
@@ -9,13 +9,14 @@ class Transaction extends Component {
     super(props);
 
     this.state = {
-      nome: null,
-      numero_cartao: null,
-      sobrenome: null,
-      validate_mes: null,
-      validade_ano: null,
-      cvc: null,
-      token: null,
+      nome: "",
+      numero_cartao: 0,
+      sobrenome: "",
+      validate_mes: "",
+      validade_ano: "",
+      cvc: 0,
+      token: "",
+      valor: 0,
     };
   }
 
@@ -45,28 +46,27 @@ class Transaction extends Component {
       <form className="TransactionForm" onSubmit={ this.handleSubmit }>
         <Grid>
         <Row>
-        <formGroup>
         <Col xs={5} md={5}>
+          <FormGroup>
             <ControlLabel> Nome: (deve ser igual ao do cartão) </ControlLabel>
             <FormControl
               type="text"
               placeholder="Nome"
               inputRef={ref => { this.nome = ref; }}
             />
-
             <ControlLabel> Sobrenome: (deve ser igual ao do cartão ) </ControlLabel>
             <FormControl
               type="text"
               placeholder="Sobrenome"
               inputRef={ref => { this.sobrenome = ref; }}
             />
+          </FormGroup>
         </Col>
-        </formGroup>
         </Row>
 
         <Row>
-        <formGroup>
         <Col xs={3} md={3}>
+          <FormGroup>
             <ControlLabel>
               Número do Cartão <Glyphicon glyph="lock" />
             </ControlLabel>
@@ -75,20 +75,22 @@ class Transaction extends Component {
               placeholder="xxxx xxxx xxxx xxxx"
               inputRef={ref => { this.input = ref; }}
             />
+          </FormGroup>
         </Col>
         <Col xs={2} md={2}>
+          <FormGroup>
             <ControlLabel> Código de Segurança </ControlLabel>
             <FormControl
               type="number"
               placeholder="CVC"
               inputRef={ref => { this.input = ref; }}
             />
+          </FormGroup>
         </Col>
-        </formGroup>
         </Row>
 
         <Row>
-        <Col xs={3}>
+        <Col xs={3} md={3}>
           <div>
             <ul className="credit-card-list clearfix">
               <li><i data-brand="visa" className="fa fa-cc-visa"></i></li>
@@ -98,28 +100,42 @@ class Transaction extends Component {
             </ul>
           </div>
         </Col>
-
-        <Col xs={2}>
-          <formGroup>
-          <ControlLabel> Data de Validade </ControlLabel>
-          <FormControl
-            type="month"
-            placeholder="MM/YYYY"
-          />
-          </formGroup>
+        <Col xs={2} md={2}>
+          <FormGroup>
+            <ControlLabel> Data de Validade </ControlLabel>
+            <FormControl
+              type="month"
+              placeholder="MM/YYYY"
+            />
+          </FormGroup>
         </Col>
         </Row>
 
         <Row>
-          <Col xs={5}>
-          <formGroup>
+        <Col xs={4} md={4}>
+          <FormGroup>
+            <ControlLabel> Valor do Pagamento R$: </ControlLabel>
+            <InputGroup>
+              <FormControl
+                type="number"
+                placeholder="50"
+              />
+              <InputGroup.Addon>.00</InputGroup.Addon>
+            </InputGroup>
+          </FormGroup>
+        </Col>
+      </Row>
+
+        <Row>
+          <Col xs={5} md={5}>
+          <FormGroup>
             <Button
               type="submit"
               bsStyle="success"
               block>
                 Processar
             </Button>
-          </formGroup>
+          </FormGroup>
         </Col>
       </Row>
       </Grid>
