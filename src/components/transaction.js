@@ -2,18 +2,21 @@ import React, { Component } from 'react';
 import { Button, ControlLabel, FormControl, FormGroup, InputGroup } from 'react-bootstrap';
 import { Glyphicon, Row, Col, Grid } from 'react-bootstrap';
 import './transaction.css';
+import pagarme from 'pagarme';
 
 class Transaction extends Component {
   constructor(props) {
     super(props);
 
     this.state = {
-      nome: '',
-      numero_cartao: '',
-      validate: '',
-      cvv: '',
+      card_number: '',
+      card_holder_name: '',
+      card_expiration_date: '',
+      card_cvv: '',
       api_key: 'ak_test_TS9bFUr3GHFoMiMrFzALO7DG6hO3xN',
-      valor: '',
+      enc_key: 'ek_test_O3BDfhxbrXrHTaDujCKP6BqYVyqqNl',
+      card_hash: '',
+      amount: '',
     };
 
     this.handleChangeNome = this.handleChangeNome.bind(this);
@@ -24,6 +27,7 @@ class Transaction extends Component {
     this.handleSubmit = this.handleSubmit.bind(this);
   }
 
+  // Todo: implement this later
   handleResponse(result, success, fail) {
     if(result.ok){
       console.log(result);
@@ -35,52 +39,114 @@ class Transaction extends Component {
   handleSubmit(event) {
     event.preventDefault();
 
-    const stateClone = {
-      nome: this.state.nome,
-      numero_cartao: this.state.numero_cartao,
-      validate: this.state.validade,
-      cvv: this.state.cvv,
-      api_key: this.state.api_key
+    const card = {
+      card_holder_name: this.state.card_holder_name,
+      card_number: this.state.card_number,
+      card_expiration_date: this.state.card_expiration_date.replace("-","/"),
+      card_cvv: this.state.card_cvv,
     };
 
-    const jsonParams = JSON.stringify(stateClone);
+    const jsonCard = JSON.stringify(card);
+    console.log(jsonCard);
+
+    /* Todo: some bug related to "card number is missing"
+     * var cardValidations = pagarme.validate({card: jsonCard})
+     * */
+
+    /* Todo: return json must be validated */
+    pagarme.client.connect({ encryption_key: this.state.enc_key })
+      .then(client => client.security.encrypt(card))
+      .then((new_card_hash) => { this.setState({card_hash: new_card_hash})})
+
+    /* Todo: refactor to modules each transaction steps */
+    /* Todo: create forms for each data information */
+    /* Todo: format expiration date for transaction */
+    /* Todo: checkout how to allow amount payment test */
+    const credit_card_transaction = {
+      api_key: this.state.api_key,
+      amount: this.state.amount,
+      card_number: this.state.card_number,
+      card_cvv: this.state.card_cvv,
+      card_expiration_date: "1220",
+      card_holder_name: this.state.card_holder_name,
+      billing: {
+        address: {
+          street: "Guara",
+          complementary: "apartamento",
+          street_number: "2",
+          neighborhood: "guara2",
+          city: "brasilia",
+          state: "df",
+          zipcode: "70000123",
+          country: "br",
+        },
+        name: "Trinity Moss"
+      },
+      items: [{
+        id: "r2d3",
+        title: "Red pills",
+        unit_price: "50",
+        quantity: "1",
+        tangible: true
+      }],
+      customer: {
+        external_id: "#3311",
+        name: this.state.card_holder_name,
+        type: "individual",
+        country: "br",
+        email: "mranderson@matrix.com",
+        documents: [
+          {
+            type: "cpf",
+            number: "47323515300"
+          }
+        ],
+        phone_numbers: ["+556123124234", "+5561234523451"],
+        birthday: "1982-01-02"
+      }
+    }
+
+    const jsonTransaction = JSON.stringify(credit_card_transaction);
+    console.log(jsonTransaction);
 
     fetch('https://api.pagar.me/1/transactions', {
-      method: 'post', body:jsonParams, headers: {'Content-Type': 'application/json'}
-      })
+      method: 'post', body:jsonTransaction, headers: {'Content-Type':'application/json'}
+    }).then( transaction_status => { console.log(transaction_status) })
   }
+
 
 
   handleChangeNome(event) {
     this.setState({
-      nome: event.target.value
+      card_holder_name: event.target.value
     });
   }
 
   handleChangeNumeroCartao(event) {
     this.setState({
-      numero_cartao: event.target.value
+      card_number: event.target.value
     });
   }
 
   handleChangeValidade(event) {
     this.setState({
-      validade: event.target.value
+      card_expiration_date: event.target.value
     });
   }
 
   handleChangecvv(event) {
     this.setState({
-      cvv: event.target.value
+      card_cvv: event.target.value
     });
   }
 
   handleChangeValor(event) {
     this.setState({
-      valor: event.target.value
+      amount: event.target.value
     })
   }
 
+  /* todo: fields valiation */
   renderCardForm() {
     return(
     <div>
@@ -100,7 +166,7 @@ class Transaction extends Component {
             <FormControl
               type="text"
               placeholder="Nome Completo"
-              value={this.state.nome}
+              value={this.state.card_holder_name}
               onChange={this.handleChangeNome}
             />
           </FormGroup>
@@ -116,7 +182,7 @@ class Transaction extends Component {
             <FormControl
               type="text"
               placeholder="xxxx xxxx xxxx xxxx"
-              value={this.state.numero_cartao}
+              value={this.state.card_number}
               onChange={this.handleChangeNumeroCartao}
             />
           </FormGroup>
@@ -127,7 +193,7 @@ class Transaction extends Component {
             <FormControl
               type="text"
               placeholder="cvv"
-              value={this.state.cvv}
+              value={this.state.card_cvv}
               onChange={this.handleChangecvv}
             />
           </FormGroup>
@@ -150,8 +216,8 @@ class Transaction extends Component {
             <ControlLabel> Data de Validade </ControlLabel>
             <FormControl
               type="month"
-              placeholder="MM-yyyy"
-              value={this.state.validade}
+              value={this.state.card_expiration_date}
+              placeholder="YYYY/MM"
               onChange={this.handleChangeValidade}
             />
           </FormGroup>
@@ -170,7 +236,7 @@ class Transaction extends Component {
               <FormControl
                 type="text"
                 placeholder="50"
-                value={this.state.valor}
+                value={this.state.amount}
                 onChange={this.handleChangeValor}
               />
               <InputGroup.Addon>.00</InputGroup.Addon>
@@ -193,14 +259,6 @@ class Transaction extends Component {
       </Row>
       </Grid>
     </form>
-
-    <div>
-      <p>Nome: {this.state.nome}</p>
-      <p>Numero: {this.state.numero_cartao}</p>
-      <p>cvv: {this.state.cvv}</p>
-      <p>Validade: {this.state.validade}</p>
-      <p>Valor: {this.state.valor}</p>
-    </div>
     </div>
 
     )
