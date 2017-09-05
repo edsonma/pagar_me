@@ -1,8 +1,17 @@
 import React, { Component } from 'react';
-import { Button, ControlLabel, FormControl, FormGroup, InputGroup } from 'react-bootstrap';
+import { Button, ControlLabel, FormControl, FormGroup } from 'react-bootstrap';
 import { Glyphicon, Row, Col, Grid } from 'react-bootstrap';
-import './transaction.css';
+import Datetime from 'react-datetime';
+import Message from './message';
+
+import moment from 'moment';
 import pagarme from 'pagarme';
+
+import './transaction.css';
+import './react-datetime.css';
+
+const api_key = 'ak_test_TS9bFUr3GHFoMiMrFzALO7DG6hO3xN'
+const enc_key = 'ek_test_O3BDfhxbrXrHTaDujCKP6BqYVyqqNl'
 
 class Transaction extends Component {
   constructor(props) {
@@ -13,10 +22,9 @@ class Transaction extends Component {
       card_holder_name: '',
       card_expiration_date: '',
       card_cvv: '',
-      api_key: 'ak_test_TS9bFUr3GHFoMiMrFzALO7DG6hO3xN',
-      enc_key: 'ek_test_O3BDfhxbrXrHTaDujCKP6BqYVyqqNl',
       card_hash: '',
       amount: '',
+      message: undefined
     };
 
     this.handleChangeNome = this.handleChangeNome.bind(this);
@@ -25,15 +33,30 @@ class Transaction extends Component {
     this.handleChangecvv = this.handleChangecvv.bind(this);
     this.handleChangeValor = this.handleChangeValor.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
+    this.handleResponse = this.handleResponse.bind(this);
   }
 
-  // Todo: implement this later
+  // Todo: Get better information about errors with response status
   handleResponse(result, success, fail) {
+    let info;
+
     if(result.ok){
-      console.log(result);
+      info = "Sua requisição foi processada com sucesso!";
     } else {
-      console.log(result.status);
+      if(result.status === 400) {
+        info = "Algum parâmetro obrigatório não foi passado, ou os parâmetros passados não estão corretos";
+      }else if(result.status === 401) {
+        info = "Falta de autorização para acessar este endpoint";
+      }else if(result.status === 404) {
+        info = "Endpoint não encontrado, revise URL passada";
+      }else if(result.status === 400) {
+        info = "Erro interno do Pagar.me, tente sua requisição novamente. Caso o erro continue, entre em contato com suporte@pagar.me";
+      }
     }
+
+    this.setState({
+      message: info
+    });
   }
 
   handleSubmit(event) {
@@ -42,80 +65,46 @@ class Transaction extends Component {
     const card = {
       card_holder_name: this.state.card_holder_name,
       card_number: this.state.card_number,
-      card_expiration_date: this.state.card_expiration_date.replace("-","/"),
+      card_expiration_date: this.state.card_expiration_date,
       card_cvv: this.state.card_cvv,
     };
 
     const jsonCard = JSON.stringify(card);
     console.log(jsonCard);
 
-    /* Todo: some bug related to "card number is missing"
-     * var cardValidations = pagarme.validate({card: jsonCard})
-     * */
+    // bugfix: pagar.me api always return that card_number doest not exist
+    // var cardValidations = pagarme.validate({card: jsonCard})
 
     /* Todo: return json must be validated */
-    pagarme.client.connect({ encryption_key: this.state.enc_key })
+    pagarme.client.connect({ encryption_key: enc_key })
       .then(client => client.security.encrypt(card))
       .then((new_card_hash) => { this.setState({card_hash: new_card_hash})})
 
     /* Todo: refactor to modules each transaction steps */
-    /* Todo: create forms for each data information */
-    /* Todo: format expiration date for transaction */
-    /* Todo: checkout how to allow amount payment test */
+    /* Todo: create forms for each required data information (billing, itens, consumer)*/
+    /* Todo: Antifraud disabled to make the test easier */
     const credit_card_transaction = {
-      api_key: this.state.api_key,
+      api_key: api_key,
       amount: this.state.amount,
       card_number: this.state.card_number,
       card_cvv: this.state.card_cvv,
-      card_expiration_date: "1220",
+      card_expiration_date: (this.state.card_expiration_date).slice(0,2)+(this.state.card_expiration_date).slice(5,7),
       card_holder_name: this.state.card_holder_name,
-      billing: {
-        address: {
-          street: "Guara",
-          complementary: "apartamento",
-          street_number: "2",
-          neighborhood: "guara2",
-          city: "brasilia",
-          state: "df",
-          zipcode: "70000123",
-          country: "br",
-        },
-        name: "Trinity Moss"
-      },
-      items: [{
-        id: "r2d3",
-        title: "Red pills",
-        unit_price: "50",
-        quantity: "1",
-        tangible: true
-      }],
-      customer: {
-        external_id: "#3311",
-        name: this.state.card_holder_name,
-        type: "individual",
-        country: "br",
-        email: "mranderson@matrix.com",
-        documents: [
-          {
-            type: "cpf",
-            number: "47323515300"
-          }
-        ],
-        phone_numbers: ["+556123124234", "+5561234523451"],
-        birthday: "1982-01-02"
-      }
     }
 
     const jsonTransaction = JSON.stringify(credit_card_transaction);
     console.log(jsonTransaction);
 
     fetch('https://api.pagar.me/1/transactions', {
-      method: 'post', body:jsonTransaction, headers: {'Content-Type':'application/json'}
-    }).then( transaction_status => { console.log(transaction_status) })
-  }
+       method: 'post', body:jsonTransaction, headers: {'Content-Type':'application/json'}
+    }).then(
+      result => this.handleResponse(result,
+        (r) => { window.location = r.redirect || '/'},
+        (r) => { this.setState({message: r.message})}
+      )
+    )}
 
-
-
+  /* Todo: one handler for all inputs*/
   handleChangeNome(event) {
     this.setState({
       card_holder_name: event.target.value
@@ -128,9 +117,9 @@ class Transaction extends Component {
     });
   }
 
-  handleChangeValidade(event) {
+  handleChangeValidade(date, event) {
     this.setState({
-      card_expiration_date: event.target.value
+      card_expiration_date: moment(date).format('MM-YYYY')
     });
   }
 
@@ -141,12 +130,17 @@ class Transaction extends Component {
   }
 
   handleChangeValor(event) {
+    var nonNumericRegex = /[^0-9.]+/g;
+
     this.setState({
       amount: event.target.value
+              .replace(nonNumericRegex, "")
+              .replace(/(\.\d\d)\d+/g, "$1")
+              .replace(/^\./g, "0.")
     })
   }
 
-  /* todo: fields valiation */
+  /* todo: fields validation */
   renderCardForm() {
     return(
     <div>
@@ -161,6 +155,12 @@ class Transaction extends Component {
         <Grid>
         <Row>
         <Col xs={5} md={5}>
+          {this.state.message && <Message message={this.state.message} message_type="info" />}
+        </Col>
+        </Row>
+
+        <Row>
+        <Col xs={5} md={5}>
           <FormGroup>
             <ControlLabel> Nome Completo: (deve ser igual ao do cartão) </ControlLabel>
             <FormControl
@@ -168,6 +168,7 @@ class Transaction extends Component {
               placeholder="Nome Completo"
               value={this.state.card_holder_name}
               onChange={this.handleChangeNome}
+              required={true}
             />
           </FormGroup>
         </Col>
@@ -184,6 +185,7 @@ class Transaction extends Component {
               placeholder="xxxx xxxx xxxx xxxx"
               value={this.state.card_number}
               onChange={this.handleChangeNumeroCartao}
+              required={true}
             />
           </FormGroup>
         </Col>
@@ -195,6 +197,7 @@ class Transaction extends Component {
               placeholder="cvv"
               value={this.state.card_cvv}
               onChange={this.handleChangecvv}
+              required={true}
             />
           </FormGroup>
         </Col>
@@ -214,12 +217,12 @@ class Transaction extends Component {
         <Col xs={2} md={2}>
           <FormGroup>
             <ControlLabel> Data de Validade </ControlLabel>
-            <FormControl
-              type="month"
-              value={this.state.card_expiration_date}
-              placeholder="YYYY/MM"
-              onChange={this.handleChangeValidade}
-            />
+              <Datetime viewMode='months' 
+                        defaultValue='' 
+                        dateFormat='MM-YYYY' 
+                        closeOnSelect={true}
+                        onChange={ (value) => { this.handleChangeValidade(value._d); } }> 
+              </Datetime>
           </FormGroup>
         </Col>
         </Row>
@@ -232,15 +235,15 @@ class Transaction extends Component {
         <Col xs={4} md={4}>
           <FormGroup>
             <ControlLabel> Valor do Pagamento R$: </ControlLabel>
-            <InputGroup>
               <FormControl
                 type="text"
-                placeholder="50"
+                pattern="^\d+(?:\.\d{1,2})?$"
+                step="0.01"
+                placeholder="0.00"
                 value={this.state.amount}
                 onChange={this.handleChangeValor}
+                required={true}
               />
-              <InputGroup.Addon>.00</InputGroup.Addon>
-            </InputGroup>
           </FormGroup>
         </Col>
       </Row>
