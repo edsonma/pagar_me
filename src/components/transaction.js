@@ -99,7 +99,7 @@ class Transaction extends Component {
        method: 'post', body:jsonTransaction, headers: {'Content-Type':'application/json'}
     }).then(
       result => this.handleResponse(result,
-        (r) => { window.location = r.redirect || '/'},
+        (r) => { window.location = r.redirect || ''},
         (r) => { this.setState({message: r.message})}
       )
     )}
