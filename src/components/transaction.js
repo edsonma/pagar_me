@@ -1,9 +1,9 @@
 import React, { Component } from 'react';
 import { Button, ControlLabel, FormControl, FormGroup } from 'react-bootstrap';
 import { Glyphicon, Row, Col, Grid } from 'react-bootstrap';
+import Payment from 'payment'
 import Datetime from 'react-datetime';
 import Message from './message';
-
 import moment from 'moment';
 import pagarme from 'pagarme';
 
@@ -62,6 +62,14 @@ class Transaction extends Component {
   handleSubmit(event) {
     event.preventDefault();
 
+    if(!Payment.fns.validateCardNumber(this.state.card_number)){
+      this.setState({message: "Número do Cartão está inválido!"})
+      return;
+    }else if(!Payment.fns.validateCardCVC(this.state.card_cvc)){
+      this.setState({message: "CVC está inválido!"})
+      return;
+    }
+
     const card = {
       card_holder_name: this.state.card_holder_name,
       card_number: this.state.card_number,
@@ -112,8 +120,26 @@ class Transaction extends Component {
   }
 
   handleChangeNumeroCartao(event) {
+    var data = event.target.value;
+
+    const type = Payment.fns.cardType(event.target.value);
+    const cards = document.querySelectorAll('[data-brand]');
+
+    [].forEach.call(cards, (element) => {
+      if (element.getAttribute('data-brand') === type) {
+        element.classList.add('active');
+      } else {
+        element.classList.remove('active');
+      }
+    });
+
+    if(data.length === 4 || 
+       data.length === 9 || 
+       data.length === 14)
+       data+=' ';
+
     this.setState({
-      card_number: event.target.value
+      card_number: data
     });
   }
 
@@ -186,6 +212,8 @@ class Transaction extends Component {
               value={this.state.card_number}
               onChange={this.handleChangeNumeroCartao}
               required={true}
+              className="input.cc-num"
+              maxLength="19"
             />
           </FormGroup>
         </Col>
