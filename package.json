@@ -21,7 +21,8 @@
     "react-scripts": "^1.0.12"
   },
   "scripts": {
-    "start-js": "react-scripts start",
+    "start-js": "react-scripts build",
+    "start-dev": "react-scripts start",
     "start": "npm-run-all -p watch-css start-js",
     "build": "npm run build-css && react-scripts build",
     "test": "react-scripts test --env=jsdom",
