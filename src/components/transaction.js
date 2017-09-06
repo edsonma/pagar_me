@@ -65,10 +65,14 @@ class Transaction extends Component {
     if(!Payment.fns.validateCardNumber(this.state.card_number)){
       this.setState({message: "Número do Cartão está inválido!"})
       return;
-    }else if(!Payment.fns.validateCardCVC(this.state.card_cvc)){
+    }
+
+    /* bug: need fix */
+    /*
+    else if(!Payment.fns.validateCardCVC(this.state.card_cvc)){
       this.setState({message: "CVC está inválido!"})
       return;
-    }
+    }*/
 
     const card = {
       card_holder_name: this.state.card_holder_name,
