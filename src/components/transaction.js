@@ -24,7 +24,7 @@ class Transaction extends Component {
       card_cvv: '',
       card_hash: '',
       amount: '',
-      message: undefined
+      message: undefined,
     };
 
     this.handleChangeNome = this.handleChangeNome.bind(this);
@@ -41,6 +41,7 @@ class Transaction extends Component {
     let info;
 
     if(result.ok){
+      console.log(result.json());
       info = "Sua requisição foi processada com sucesso!";
     } else {
       if(result.status === 400) {
@@ -184,13 +185,13 @@ class Transaction extends Component {
       <form className="TransactionForm" onSubmit={ this.handleSubmit }>
         <Grid>
         <Row>
-        <Col xs={5} md={5}>
+        <Col xs={6} md={6}>
           {this.state.message && <Message message={this.state.message} message_type="info" />}
         </Col>
         </Row>
 
         <Row>
-        <Col xs={5} md={5}>
+        <Col xs={6} md={6}>
           <FormGroup>
             <ControlLabel> Nome Completo: (deve ser igual ao do cartão) </ControlLabel>
             <FormControl
@@ -205,7 +206,7 @@ class Transaction extends Component {
         </Row>
 
         <Row>
-        <Col xs={3} md={3}>
+        <Col xs={4} md={4}>
           <FormGroup>
             <ControlLabel>
               Número do Cartão <Glyphicon glyph="lock" />
@@ -221,7 +222,7 @@ class Transaction extends Component {
             />
           </FormGroup>
         </Col>
-        <Col xs={2} md={2}>
+        <Col xs={3} md={3}>
           <FormGroup>
             <ControlLabel> Código de Segurança </ControlLabel>
             <FormControl
@@ -236,7 +237,7 @@ class Transaction extends Component {
         </Row>
 
         <Row>
-        <Col xs={3} md={3}>
+        <Col xs={4} md={4}>
           <div>
             <ul className="credit-card-list clearfix">
               <li><i data-brand="visa" className="fa fa-cc-visa"></i></li>
@@ -246,7 +247,7 @@ class Transaction extends Component {
             </ul>
           </div>
         </Col>
-        <Col xs={2} md={2}>
+        <Col xs={3} md={3}>
           <FormGroup>
             <ControlLabel> Data de Validade </ControlLabel>
               <Datetime viewMode='months' 
@@ -264,7 +265,7 @@ class Transaction extends Component {
         </Col>
         </Row>
         <Row>
-        <Col xs={4} md={4}>
+        <Col xs={6} md={6}>
           <FormGroup>
             <ControlLabel> Valor do Pagamento R$: </ControlLabel>
               <FormControl
