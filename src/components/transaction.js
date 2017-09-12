@@ -10,8 +10,6 @@ import pagarme from 'pagarme';
 import './transaction.css';
 import './react-datetime.css';
 
-const api_key = 'ak_test_TS9bFUr3GHFoMiMrFzALO7DG6hO3xN'
-const enc_key = 'ek_test_O3BDfhxbrXrHTaDujCKP6BqYVyqqNl'
 
 class Transaction extends Component {
   constructor(props) {
@@ -23,8 +21,15 @@ class Transaction extends Component {
       card_expiration_date: '',
       card_cvv: '',
       card_hash: '',
-      amount: '',
+      amount: '7500',
       message: undefined,
+      api_key: this.props.api_key,
+      enc_key: this.props.enc_key,
+      transaction: {
+        status: '',
+        authorized_amount: '',
+        tid: ''
+      }
     };
 
     this.handleChangeNome = this.handleChangeNome.bind(this);
@@ -33,18 +38,27 @@ class Transaction extends Component {
     this.handleChangecvv = this.handleChangecvv.bind(this);
     this.handleChangeValor = this.handleChangeValor.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
-    this.handleResponse = this.handleResponse.bind(this);
+    this.handleAuthorization = this.handleAuthorization.bind(this);
+    this.handleCapture = this.handleCapture.bind(this);
   }
 
-  // Todo: Get better information about errors with response status
-  handleResponse(result, success, fail) {
+  // Todo: Implement fail to show information to user
+  handleAuthorization(result, success) {
     let info;
 
     if(result.ok){
-      console.log(result.json());
-      info = "Sua requisição foi processada com sucesso!";
+      result.json().then(json=>{
+        if(json.status==="authorized"){
+          info = "Transação Autorizada";
+          success(json);
+        } else{
+          console.log(json);
+          info = "Error: "+ json.status;
+        }
+        this.setState({ message: info });
+      })
     } else {
-      if(result.status === 400) {
+       if(result.status === 400) {
         info = "Algum parâmetro obrigatório não foi passado, ou os parâmetros passados não estão corretos";
       }else if(result.status === 401) {
         info = "Falta de autorização para acessar este endpoint";
@@ -53,11 +67,8 @@ class Transaction extends Component {
       }else if(result.status === 400) {
         info = "Erro interno do Pagar.me, tente sua requisição novamente. Caso o erro continue, entre em contato com suporte@pagar.me";
       }
+      this.setState({ message: info });
     }
-
-    this.setState({
-      message: info
-    });
   }
 
   handleSubmit(event) {
@@ -89,7 +100,7 @@ class Transaction extends Component {
     // var cardValidations = pagarme.validate({card: jsonCard})
 
     /* Todo: return json must be validated */
-    pagarme.client.connect({ encryption_key: enc_key })
+    pagarme.client.connect({ encryption_key: this.state.enc_key })
       .then(client => client.security.encrypt(card))
       .then((new_card_hash) => { this.setState({card_hash: new_card_hash})})
 
@@ -97,25 +108,58 @@ class Transaction extends Component {
     /* Todo: create forms for each required data information (billing, itens, consumer)*/
     /* Todo: Antifraud disabled to make the test easier */
     const credit_card_transaction = {
-      api_key: api_key,
+      api_key: this.state.api_key,
       amount: this.state.amount,
       card_number: this.state.card_number,
       card_cvv: this.state.card_cvv,
       card_expiration_date: (this.state.card_expiration_date).slice(0,2)+(this.state.card_expiration_date).slice(5,7),
       card_holder_name: this.state.card_holder_name,
+      capture: "false"
     }
 
     const jsonTransaction = JSON.stringify(credit_card_transaction);
     console.log(jsonTransaction);
 
     fetch('https://api.pagar.me/1/transactions', {
-       method: 'post', body:jsonTransaction, headers: {'Content-Type':'application/json'}
-    }).then(
-      result => this.handleResponse(result,
-        (r) => { this.setState({message: r.message})},
-        (r) => { this.setState({message: r.message})}
-      )
-    )}
+      method: 'post', body:jsonTransaction, headers: {'Content-Type':'application/json'}
+    })
+    .then(result => this.handleAuthorization(result,
+            (r) => {
+              this.handleCapture(r)
+            }
+          )
+    );
+  }
+
+  handleCapture(r){
+    let info;
+    var transaction_info = {
+      status: r.status,
+      authorized_amount: r.authorized_amount,
+      tid: r.tid
+    }
+
+    /*
+     * Warning: Hardcoded to capture 50.00 instead of 75.00 authorized above
+     */ 
+    const credit_card_capture = {
+      amount: '5000',
+      api_key: this.state.api_key
+    }
+
+    var jsonCapture = JSON.stringify(credit_card_capture);
+
+    fetch('https://api.pagar.me/1/transactions/'+transaction_info.tid +'/capture', {
+      method: 'post', body:jsonCapture, headers: {'Content-Type':'application/json'}
+    }).then( result => { 
+        if(result.ok){
+          info = "Captured your $";
+        }else{
+          info = "Something wrong capturing $";
+        }
+        this.setState({ message: info });
+    });
+  }
 
   /* Todo: one handler for all inputs*/
   handleChangeNome(event) {
@@ -162,12 +206,14 @@ class Transaction extends Component {
 
   handleChangeValor(event) {
     var nonNumericRegex = /[^0-9.]+/g;
+    var data = event.target.value;
+
+    data = data.replace(nonNumericRegex, "")
+               .replace(/(\.\d\d)\d+/g, "$1")
+               .replace(/^\./g, "0.")
 
     this.setState({
-      amount: event.target.value
-              .replace(nonNumericRegex, "")
-              .replace(/(\.\d\d)\d+/g, "$1")
-              .replace(/^\./g, "0.")
+      amount: data 
     })
   }
 
@@ -185,13 +231,13 @@ class Transaction extends Component {
       <form className="TransactionForm" onSubmit={ this.handleSubmit }>
         <Grid>
         <Row>
-        <Col xs={6} md={6}>
+        <Col xs={12} md={12}>
           {this.state.message && <Message message={this.state.message} message_type="info" />}
         </Col>
         </Row>
 
         <Row>
-        <Col xs={6} md={6}>
+        <Col xs={12} md={12}>
           <FormGroup>
             <ControlLabel> Nome Completo: (deve ser igual ao do cartão) </ControlLabel>
             <FormControl
@@ -206,7 +252,7 @@ class Transaction extends Component {
         </Row>
 
         <Row>
-        <Col xs={4} md={4}>
+        <Col xs={8} md={8}>
           <FormGroup>
             <ControlLabel>
               Número do Cartão <Glyphicon glyph="lock" />
@@ -222,7 +268,7 @@ class Transaction extends Component {
             />
           </FormGroup>
         </Col>
-        <Col xs={3} md={3}>
+        <Col xs={4} md={4}>
           <FormGroup>
             <ControlLabel> Código de Segurança </ControlLabel>
             <FormControl
@@ -237,7 +283,7 @@ class Transaction extends Component {
         </Row>
 
         <Row>
-        <Col xs={4} md={4}>
+        <Col xs={8} md={8}>
           <div>
             <ul className="credit-card-list clearfix">
               <li><i data-brand="visa" className="fa fa-cc-visa"></i></li>
@@ -247,7 +293,7 @@ class Transaction extends Component {
             </ul>
           </div>
         </Col>
-        <Col xs={3} md={3}>
+        <Col xs={4} md={4}>
           <FormGroup>
             <ControlLabel> Data de Validade </ControlLabel>
               <Datetime viewMode='months' 
@@ -265,9 +311,9 @@ class Transaction extends Component {
         </Col>
         </Row>
         <Row>
-        <Col xs={6} md={6}>
+        <Col xs={8} md={8}>
           <FormGroup>
-            <ControlLabel> Valor do Pagamento R$: </ControlLabel>
+            <ControlLabel> Valor do Pagamento R$ (Fixo Autorização de R$ 75.00): </ControlLabel>
               <FormControl
                 type="text"
                 pattern="^\d+(?:\.\d{1,2})?$"
@@ -276,13 +322,14 @@ class Transaction extends Component {
                 value={this.state.amount}
                 onChange={this.handleChangeValor}
                 required={true}
+                disabled={true}
               />
           </FormGroup>
         </Col>
       </Row>
 
       <Row>
-      <Col xs={5} md={5}>
+      <Col xs={8} md={8}>
         <FormGroup>
           <Button
             type="submit"

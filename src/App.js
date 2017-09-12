@@ -27,7 +27,7 @@ class App extends Component {
     return (
       <div>
         <h1> Pagar-me </h1>
-        <Transaction />
+        <Transaction api_key={this.state.api_key} enc_key={this.state.enc_key}/>
         <hr></hr>
         <ApiKeyForm handleKey={this.updateKey} api_key={this.state.api_key} enc_key={this.state.enc_key}/>
         <hr></hr>

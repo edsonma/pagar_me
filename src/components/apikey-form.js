@@ -36,7 +36,7 @@ class ApiKeyForm extends Component {
                 <input
                   type="text"
                   placeholder="API_KEY"
-                  value={this.props.api_key}
+                  defaultValue={this.props.api_key}
                   ref="api_key"
                   required={true}
                   size={this.props.api_key.length+5}
@@ -51,9 +51,9 @@ class ApiKeyForm extends Component {
                 <input
                   type="text"
                   placeholder="ENC_KEY"
-                  value={this.props.enc_key}
+                  defaultValue={this.props.enc_key}
                   ref="enc_key"
-                  require={true}
+                  required={true}
                   size={this.props.enc_key.length+5}
                 />
               </FormGroup>
