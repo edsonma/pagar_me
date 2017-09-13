@@ -2,7 +2,8 @@
 
 * yarn start - runs for devel
 * yarn build - build for production
-* yarn test - no tests :( but todo
+* yarn test - now with tests! Using mocha + babel + jsdom
+* yarn test-old - uses jest
 
 ## This project uses React.js:
  
