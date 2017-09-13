@@ -1,21 +1,27 @@
 .Transaction {
-  max-width: 400px; }
-  .Transaction .credit-card-list {
-    list-style: none;
-    padding: 30; }
-    .Transaction .credit-card-list li {
-      float: left;
-      color: #aaa;
-      font-size: 26px; }
-      .Transaction .credit-card-list li:not(:last-child) {
-        margin-right: 10px; }
-    .Transaction .credit-card-list .active {
-      color: #666; }
-  .Transaction .alert {
-    margin-top: 20px; }
-    .Transaction .alert h5 {
-      margin-top: 0px; }
-    .Transaction .alert .exp-cvc {
-      margin-bottom: 5px; }
-      .Transaction .alert .exp-cvc span:first-child {
-        margin-right: 15px; }
+  max-width: 400px; 
+}
+
+.Transaction .credit-card-list {
+  list-style: none;
+  padding: 30; 
+}
+
+.Transaction .credit-card-list li {
+  float: left;
+  color: #aaa;
+  font-size: 26px;
+}
+
+.Transaction .credit-card-list li:not(:last-child) {
+margin-right: 10px; }
+.Transaction .credit-card-list .active {
+color: #666; }
+.Transaction .alert {
+margin-top: 20px; }
+.Transaction .alert h5 {
+margin-top: 0px; }
+.Transaction .alert .exp-cvc {
+margin-bottom: 5px; }
+.Transaction .alert .exp-cvc span:first-child {
+margin-right: 15px; }
