@@ -334,6 +334,7 @@ class Transaction extends Component {
           <Button
             type="submit"
             bsStyle="success"
+            className="processar" 
             block>
               Processar
           </Button>

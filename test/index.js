@@ -19,4 +19,17 @@ describe("<App />", () => {
 
     expect(h1.textContent).toEqual(" Pagar-me ");
   });
+
+ it("Should return an button with 'Processar' string", () => {
+
+    const component = ReactTestUtils.renderIntoDocument(
+      <App />
+    );
+
+    const button = ReactTestUtils.findRenderedDOMComponentWithClass(
+      component, 'processar'
+    );
+
+    expect(button.textContent).toEqual("Processar");
+  });
 });
